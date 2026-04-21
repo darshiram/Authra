@@ -35,6 +35,8 @@ const Navbar = () => {
     { name: 'Sponsors', path: '/sponsors' },
     { name: 'Testimonials', path: '/testimonials' },
     { name: 'Contact', path: '/contact' },
+    { name: 'Security', path: '/settings/security' },
+    { name: 'Admin', path: '/admin' },
   ];
 
   return (
