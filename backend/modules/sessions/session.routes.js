@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect } from '../../core/middleware/security.js';
+import { protect } from '../../core/middleware/authMiddleware.js';
 import { 
   getActiveSessions, 
   getLoginHistory, 
