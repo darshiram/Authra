@@ -15,36 +15,50 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PERMISSIONS } from './utils/rbac';
 
+// Admin Panel
+import AdminLayout from './components/admin/AdminLayout';
+import UsersPage from './pages/admin/UsersPage';
+import OrgsPage from './pages/admin/OrgsPage';
+import CertsPage from './pages/admin/CertsPage';
+import SubsPage from './pages/admin/SubsPage';
+
 function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen flex flex-col font-sans">
-            <Navbar />
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/partners" element={<Partners />} />
-                <Route path="/sponsors" element={<Sponsors />} />
-                <Route path="/testimonials" element={<Testimonials />} />
-                <Route path="/settings/security" element={<SecuritySettings />} />
-                
-                {/* Protected Admin Routes */}
-                <Route path="/admin/*" element={
-                  <ProtectedRoute requiredPermission={PERMISSIONS.USERS_READ}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
+          <Routes>
+            {/* Public routes with Navbar/Footer */}
+            <Route element={
+              <div className="min-h-screen flex flex-col font-sans">
+                <Navbar />
+                <main className="flex-grow">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/partners" element={<Partners />} />
+                    <Route path="/sponsors" element={<Sponsors />} />
+                    <Route path="/testimonials" element={<Testimonials />} />
+                    <Route path="/settings/security" element={<SecuritySettings />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+                <Footer />
+              </div>
+            }>
+              <Route path="/*" />
+            </Route>
 
-            <Footer />
-          </div>
+            {/* Admin Panel — own layout, no Navbar/Footer */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="orgs" element={<OrgsPage />} />
+              <Route path="certs" element={<CertsPage />} />
+              <Route path="subs" element={<SubsPage />} />
+            </Route>
+          </Routes>
         </Router>
       </AuthProvider>
     </HelmetProvider>

@@ -9,7 +9,11 @@ const organizationSchema = new mongoose.Schema({
   settings: {
     mfaRequired: { type: Boolean, default: false },
     ssoEnabled: { type: Boolean, default: false }
-  }
+  },
+  status: { type: String, enum: ['active', 'banned', 'pending_verification'], default: 'active' },
+  subscriptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription' },
+  banReason: { type: String },
+  bannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }
 }, { timestamps: true });
 
 export default mongoose.model('Organization', organizationSchema);

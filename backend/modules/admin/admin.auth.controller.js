@@ -4,6 +4,7 @@ import { generateAccessToken, generateRefreshToken } from '../../core/utils/jwt.
 import { createSession, revokeSession } from '../sessions/session.service.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { isStrongPassword } from '../../core/utils/validation.js';
 
 const sendTokenResponse = async (admin, statusCode, req, res) => {
   const accessToken = generateAccessToken(admin._id, admin.role, 'Admin');
@@ -76,12 +77,23 @@ export const adminLogin = async (req, res) => {
     }
 
     if (!(await admin.comparePassword(password))) {
+      admin.failedLoginAttempts = (admin.failedLoginAttempts || 0) + 1;
+      if (admin.failedLoginAttempts >= 5) {
+        admin.accountLockedUntil = new Date(Date.now() + 15 * 60 * 1000); // Lock for 15 mins
+        await AuditLog.create({
+          actorId: admin._id, actorModel: 'Admin', action: 'ACCOUNT_LOCKED', 
+          details: { reason: 'Too many failed login attempts' }, ipAddress: req.ip
+        });
+      }
+      await admin.save({ validateBeforeSave: false });
       return res.status(401).json({ message: 'Incorrect email or password' });
     }
 
     if (!admin.isActive) {
       return res.status(401).json({ message: 'Admin account is deactivated' });
     }
+
+    admin.failedLoginAttempts = 0;
 
     if (admin.twoFactorEnabled) {
       // Check cooldown
@@ -189,6 +201,10 @@ export const setupSuperAdmin = async (req, res) => {
   try {
     const { email, password, name } = req.body;
     
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character.' });
+    }
+
     const adminCount = await Admin.countDocuments();
     if (adminCount > 0) {
       return res.status(403).json({ message: 'Setup already completed. Initial admin exists.' });

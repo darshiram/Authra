@@ -10,8 +10,21 @@ const userSchema = new mongoose.Schema({
   organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null },
   isActive: { type: Boolean, default: true },
   isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  verificationTokenExpires: { type: Date },
   lastLogin: { type: Date },
+  failedLoginAttempts: { type: Number, default: 0 },
+  accountLockedUntil: { type: Date },
+  status: { type: String, enum: ['active', 'banned', 'suspended'], default: 'active' },
+  banReason: { type: String },
+  bannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+  bannedAt: { type: Date }
 }, { timestamps: true });
+
+// Indexes
+userSchema.index({ email: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ organizationId: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

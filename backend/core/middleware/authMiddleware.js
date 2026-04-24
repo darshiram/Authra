@@ -1,6 +1,7 @@
 import { verifyAccessToken } from '../utils/jwt.js';
 import User from '../../modules/users/User.js';
 import Admin from '../../modules/admin/Admin.js';
+import { getCache, setCache } from '../utils/cache.js';
 
 export const protect = async (req, res, next) => {
   try {
@@ -16,13 +17,19 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = verifyAccessToken(token);
-    
-    // Check if user still exists
-    let currentUser;
-    if (decoded.model === 'Admin') {
-      currentUser = await Admin.findById(decoded.id).select('-password');
-    } else {
-      currentUser = await User.findById(decoded.id).select('-password');
+    const cacheKey = `user_${decoded.model}_${decoded.id}`;
+    let currentUser = getCache(cacheKey);
+
+    if (!currentUser) {
+      if (decoded.model === 'Admin') {
+        currentUser = await Admin.findById(decoded.id).select('-password').lean();
+      } else {
+        currentUser = await User.findById(decoded.id).select('-password').lean();
+      }
+      
+      if (currentUser) {
+        setCache(cacheKey, currentUser, 60); // Cache for 60 seconds
+      }
     }
 
     if (!currentUser || !currentUser.isActive) {
