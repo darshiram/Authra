@@ -11,6 +11,14 @@ export const getAuditLogs = async (req, res) => {
     const query = {};
     if (req.query.action) query.action = req.query.action;
     if (req.query.actorId) query.actorId = req.query.actorId;
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      query.$or = [
+        { action: searchRegex },
+        { resource: searchRegex },
+        { notes: searchRegex }
+      ];
+    }
 
     const logs = await AuditLog.find(query)
       .sort({ createdAt: -1 })

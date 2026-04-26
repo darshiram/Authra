@@ -34,3 +34,34 @@ export const configureHelmet = () => {
 
 // Prevent NoSQL injection
 export const mongoSanitizer = () => mongoSanitize();
+
+// Rate limiting for critical actions (e.g., banning users, revoking certs)
+export const criticalActionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // Limit each IP to 20 critical actions per hour
+  message: 'Too many critical actions performed from this IP, please try again after an hour'
+});
+
+// Simple anomaly detection middleware
+export const anomalyDetection = async (req, res, next) => {
+  try {
+    const userIP = req.ip;
+    const userAgent = req.headers['user-agent'];
+    const userId = req.user ? req.user._id : null;
+
+    if (!userId) return next();
+
+    // In a real scenario, this would query Redis/DB to detect unusual patterns
+    // e.g. logging in from 5 different IPs in 10 minutes, or a sudden burst of writes.
+    // For now, we'll attach a flag to req if the User-Agent is suspiciously missing
+    if (!userAgent) {
+      console.warn(`Anomaly detected: Missing User-Agent for user ${userId} at IP ${userIP}`);
+      req.audit = req.audit || {};
+      req.audit.notes = (req.audit.notes || '') + ' [Anomaly: Missing User-Agent]';
+    }
+
+    next();
+  } catch (error) {
+    next();
+  }
+};

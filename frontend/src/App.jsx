@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/layout/Navbar';
@@ -9,24 +10,30 @@ import Partners from './pages/Partners';
 import Sponsors from './pages/Sponsors';
 import Testimonials from './pages/Testimonials';
 import SecuritySettings from './pages/SecuritySettings';
-import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './components/ui/Toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PERMISSIONS } from './utils/rbac';
 
-// Admin Panel
+// Admin Panel Components
 import AdminLayout from './components/admin/AdminLayout';
-import UsersPage from './pages/admin/UsersPage';
-import OrgsPage from './pages/admin/OrgsPage';
-import CertsPage from './pages/admin/CertsPage';
-import SubsPage from './pages/admin/SubsPage';
+import PermissionGuard from './components/auth/PermissionGuard';
+
+// Lazy load admin pages for performance
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const UsersPage = lazy(() => import('./pages/admin/UsersPage'));
+const OrgsPage = lazy(() => import('./pages/admin/OrgsPage'));
+const CertsPage = lazy(() => import('./pages/admin/CertsPage'));
+const SubsPage = lazy(() => import('./pages/admin/SubsPage'));
+const AuditLogsPage = lazy(() => import('./pages/admin/AuditLogsPage'));
 
 function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <Router>
+        <ToastProvider>
+          <Router>
           <Routes>
             {/* Public routes with Navbar/Footer */}
             <Route element={
@@ -57,9 +64,15 @@ function App() {
               <Route path="orgs" element={<OrgsPage />} />
               <Route path="certs" element={<CertsPage />} />
               <Route path="subs" element={<SubsPage />} />
+              <Route path="audit" element={
+                <PermissionGuard permission={PERMISSIONS.AUDIT_READ} fallback={<div className="p-8 text-center text-gray-500">Access Denied</div>}>
+                  <AuditLogsPage />
+                </PermissionGuard>
+              } />
             </Route>
           </Routes>
         </Router>
+        </ToastProvider>
       </AuthProvider>
     </HelmetProvider>
   );

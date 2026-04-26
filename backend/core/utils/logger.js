@@ -11,7 +11,7 @@ const logger = winston.createLogger({
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     errors({ stack: true }),
-    logFormat
+    winston.format.json() // Structured logging for production/DevOps monitoring
   ),
   transports: [
     new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
@@ -27,5 +27,15 @@ if (process.env.NODE_ENV !== 'production') {
     )
   }));
 }
+
+// Error tracking hooks
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Rejection', { reason });
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception', { error });
+  process.exit(1);
+});
 
 export default logger;

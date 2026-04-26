@@ -22,7 +22,7 @@ const seedAdmin = async () => {
     const adminData = {
       name: 'System Super Admin',
       email: 'admin@authra.com',
-      password: '1234567890', // Change this in production
+      password: 'AdminPassword123!', // Change this in production
       role: 'super_admin',
       twoFactorEnabled: true
     };

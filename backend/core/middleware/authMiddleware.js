@@ -52,3 +52,36 @@ export const restrictTo = (...roles) => {
     next();
   };
 };
+
+export const requireReAuth = async (req, res, next) => {
+  try {
+    const reAuthToken = req.headers['x-reauth-token'];
+    
+    if (!reAuthToken) {
+      return res.status(403).json({ 
+        message: 'Re-authentication required', 
+        code: 'REAUTH_REQUIRED' 
+      });
+    }
+
+    const decoded = verifyAccessToken(reAuthToken);
+    
+    // Ensure the re-auth token belongs to the same user
+    if (decoded.id !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Invalid re-authentication token' });
+    }
+
+    // Check if token is recent (e.g., issued within last 5 minutes)
+    const tokenAge = Math.floor(Date.now() / 1000) - decoded.iat;
+    if (tokenAge > 300) { // 5 minutes
+      return res.status(401).json({ 
+        message: 'Re-authentication token expired',
+        code: 'REAUTH_EXPIRED'
+      });
+    }
+
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Re-authentication failed', error: error.message });
+  }
+};
